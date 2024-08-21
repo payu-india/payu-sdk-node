@@ -1,11 +1,26 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 const EMAIL_REGEX = /^(?=.{6,254}$)[A-Za-z0-9_\-\.]{1,64}\@[A-Za-z0-9_\-\.]+\.[A-Za-z]{2,}$/
 const AMOUNT_REGEX = /^\d+(\.\d{1,2})?$/
 
-function validateParams(params) {
+export interface Params {
+  key: string;
+  salt: string;
+  txnid: string;
+  amount: string;
+  productinfo: string;
+  firstname: string;
+  email: string;
+  udf1?: string;
+  udf2?: string;
+  udf3?: string;
+  udf4?: string;
+  udf5?: string;
+}
+
+function validateParams(params: Params): void {
   Object.keys(params).forEach(k => {
-    if (typeof params[k] !== 'string') {
+    if (typeof params[k as keyof Params] !== 'string') {
       throw new TypeError(`TypeError: Param "${k}" required of type String`);
     }
   });
@@ -24,13 +39,13 @@ function validateParams(params) {
     throw new Error("ArgumentError: productinfo length should be less than equal to 100");
   }
   if (firstname.length > 60) {
-   throw new Error("ArgumentError: firstname length should be less than equal to 60");
+    throw new Error("ArgumentError: firstname length should be less than equal to 60");
   }
   if (email.length > 50) {
     throw new Error("ArgumentError: email length should be less than equal to 50");
   }
   [udf1, udf2, udf3, udf4, udf5].forEach(udf => {
-    if (udf.length > 255) {
+    if (udf && udf.length > 255) {
       throw new Error("ArgumentError: udf length should be less than equal to 255");
     }
   });
@@ -49,14 +64,14 @@ function generateHash({
   udf3 = '',
   udf4 = '',
   udf5 = '',
-} = {}) {
+}: Params): string {
   validateParams({ key, salt, txnid, amount, productinfo, firstname, email, udf1, udf2, udf3, udf4, udf5 });
   const cryp = crypto.createHash('sha512');
   const text = key+'|'+txnid+'|'+amount+'|'+productinfo+'|'+firstname+'|'+email+'|'+ udf1+'|'+udf2+'|'+udf3+'|'+udf4+'|'+udf5+'||||||'+salt;
   cryp.update(text);
   return cryp.digest('hex');
 }
- 
+
 /* Response received from Payment Gateway at this page.
 It is absolutely mandatory that the hash (or checksum) is computed again after you receive response from PayU and compare it with request and post back parameters. This will protect you from any tampering by the user and help in ensuring a safe and secure transaction experience. It is mandate that you secure your integration with PayU by implementing Verify webservice and Webhook/callback as a secondary confirmation of transaction response.
 
@@ -68,7 +83,12 @@ hash = sha512(additionalCharges|SALT|status||||||udf5|||||email|firstname|produc
 
 */
 
-function validateHash(hash, {
+export interface HashParams extends Params {
+  status: string;
+  additionalCharges?: string;
+}
+
+function validateHash(hash: string, {
   key,
   salt,
   txnid,
@@ -83,7 +103,7 @@ function validateHash(hash, {
   udf5 = '',
   status,
   additionalCharges,
-} = {}) {
+}: HashParams): boolean {
   validateParams({ key, salt, txnid, amount, productinfo, firstname, email, udf1, udf2, udf3, udf4, udf5 });
   if (typeof status !== 'string') {
     throw new TypeError('TypeError: Param "status" required of type String');
@@ -91,7 +111,7 @@ function validateHash(hash, {
   const keyString = key+'|'+txnid+'|'+amount+'|'+productinfo+'|'+firstname+'|'+email+'|'+udf1+'|'+udf2+'|'+udf3+'|'+udf4+'|'+udf5+'|||||';
   const keyArray = keyString.split('|');
   const reverseKeyArray = keyArray.reverse();
-  const reverseKeyString = salt+'|'+status+'|'+reverseKeyArray.join('|');
+  let reverseKeyString = salt+'|'+status+'|'+reverseKeyArray.join('|');
   if (additionalCharges) {
     reverseKeyString = additionalCharges + '|' + reverseKeyString
   }
@@ -101,7 +121,7 @@ function validateHash(hash, {
   return calchash === hash;
 }
 
-module.exports = {
+export {
   generateHash,
   validateHash,
-}
+};

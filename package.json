@@ -1,17 +1,18 @@
 {
   "name": "payu-sdk",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Payu's Node API",
   "main": "lib/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/payu-india/payu-sdk-node"
   },
   "author": "",
-   "keywords": [
+  "keywords": [
     "payu",
     "payu-sdk",
     "payu-checkout",
@@ -22,11 +23,22 @@
     "payu-node",
     "payu-node-sdk"
   ],
+  "types": "dist/index.d.ts",
   "files": [
-    "lib"
+    "dist"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "license": "MIT",
   "devDependencies": {
-    "jest": "^25.4.0"
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.4.2",
+    "jest": "^25.4.0",
+    "typescript": "^5.5.4"
   }
 }

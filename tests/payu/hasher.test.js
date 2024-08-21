@@ -1,4 +1,4 @@
-const { generateHash, validateHash } = require('../../lib/payu/hasher');
+const { generateHash, validateHash } = require('../../dist/payu/hasher.js');
 
 describe('hash.generateHash', () => {
   describe('missing parameters', () => {
